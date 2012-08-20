@@ -50,6 +50,7 @@
     <Compile Include="Attributes\TableNameAttribute.cs" />
     <Compile Include="Db.cs" />
     <Compile Include="DbContext.cs" />
+    <Compile Include="DbContextExtensions.cs" />
     <Compile Include="Interfaces\IDbContext.cs" />
     <Compile Include="Interfaces\IQuery.cs" />
     <Compile Include="Interfaces\ISelectQuery.cs" />
