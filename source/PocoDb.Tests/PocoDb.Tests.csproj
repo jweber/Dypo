@@ -48,6 +48,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Attributes\ColumnNameAttributeTests.cs" />
     <Compile Include="Attributes\TableNameAttributeTests.cs" />
     <Compile Include="SelectionTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

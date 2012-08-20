@@ -1,4 +1,5 @@
-﻿using PocoDb.Attributes;
+﻿using System.Reflection;
+using PocoDb.Attributes;
 
 namespace PocoDb.Utility
 {
@@ -25,6 +26,22 @@ namespace PocoDb.Utility
                 return tableNameAttribute.TableName;
 
             return typeof(TTable).Name;
+        }
+
+        /// <summary>
+        /// Gets the name of the table column. If the <paramref name="propertyInfo"/>
+        /// has an <see cref="ColumnNameAttribute"/>, then the value from the attribute
+        /// is returned. Otherwise, the name of the property is returned.
+        /// </summary>
+        /// <param name="propertyInfo"></param>
+        /// <returns></returns>
+        public static string GetColumnName(PropertyInfo propertyInfo)
+        {
+            var columnNameAttribute = AttributeUtility.GetAttribute<ColumnNameAttribute>(propertyInfo);
+            if (columnNameAttribute != null)
+                return columnNameAttribute.ColumnName;
+
+            return propertyInfo.Name;
         }
     }
 }

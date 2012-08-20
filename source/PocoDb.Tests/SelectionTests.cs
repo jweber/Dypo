@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using NUnit.Framework;
+using PocoDb.Attributes;
 
 namespace PocoDb.Tests
 {
@@ -17,7 +18,9 @@ namespace PocoDb.Tests
         {
             public int Id { get; set; }
             public string Username { get; set; }
-            public string EmailAddress { get; set; }
+            
+            [ColumnName("EmailAddress")]
+            public string Email { get; set; }
         }
 
         [Test]
@@ -27,11 +30,11 @@ namespace PocoDb.Tests
             var results = db.Select<Account>()
                 .Execute()
                 .ToList();
-
+            
             Assert.AreEqual(1, results.Count);
             Assert.AreEqual(1, results[0].Id);
             Assert.AreEqual("TestAccount1", results[0].Username);
-            Assert.AreEqual("test@example.com", results[0].EmailAddress);
+            Assert.AreEqual("test@example.com", results[0].Email);
         }
     }
 }

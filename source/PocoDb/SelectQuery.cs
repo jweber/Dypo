@@ -1,9 +1,11 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
+using System.Threading;
 using Microsoft.VisualStudio.DebuggerVisualizers;
 using PocoDb.Interfaces;
 using PocoDb.Utility;
@@ -12,6 +14,9 @@ namespace PocoDb
 {
     internal class SelectQuery<TTable> : ISelectQuery<TTable>
     {
+        private static readonly ConcurrentDictionary<string, Delegate> PocoMappers = new ConcurrentDictionary<string, Delegate>();
+        private static readonly ConcurrentDictionary<string, string[]> ColumnNames = new ConcurrentDictionary<string, string[]>();
+
         private readonly IDbContext _dbContext;
         private readonly List<string> _projectionColumns = new List<string>();
         private readonly string _tableName;
@@ -19,48 +24,44 @@ namespace PocoDb
         public SelectQuery(IDbContext dbContext, string tableName = null)
         {
             _dbContext = dbContext;
-
             _tableName = SqlGenerationUtility.GetTableName<TTable>(tableName);
-        }
-
-        private IEnumerable<string> GetPropertyNames()
-        {
-            var properties = from p in typeof(TTable).GetProperties(BindingFlags.Public | BindingFlags.Instance)
-                             select p.Name;
-
-            return properties;
         }
 
         public IEnumerable<TTable> Execute()
         {
-            _projectionColumns.AddRange(GetPropertyNames());
+            _projectionColumns.AddRange(GetColumnNames());
 
-            var command = _dbContext.DbConnection.CreateCommand();
-            command.CommandText = GenerateSql();
-
-            IDataReader reader = command.ExecuteReader();
-
-            var mapper = GenerateMapper<TTable>(reader);
-
-            using (reader)
+            using (var command = _dbContext.DbConnection.CreateCommand())
             {
-                while (true)
+                command.CommandText = GenerateSql();
+
+                IDataReader reader = command.ExecuteReader();
+                var mapper = GetMapper(reader);
+
+                using (reader)
                 {
-                    TTable output;
-                    try
+                    while (true)
                     {
-                        if (!reader.Read())
-                            yield break;
+                        TTable output;
+                        try
+                        {
+                            if (!reader.Read())
+                                yield break;
 
-                        output = mapper(reader);
-                    }
-                    catch (Exception ex)
-                    {
-                        throw;
-                    }
+                            output = mapper(reader);
+                        }
+                        catch (Exception ex)
+                        {
+                            var context = _dbContext as DbContext;
+                            if (context != null)
+                                context.HandleException(ex);
 
-                    yield return output;
-                }
+                            throw;
+                        }
+
+                        yield return output;
+                    }
+                }               
             }
         }
 
@@ -69,14 +70,41 @@ namespace PocoDb
             return string.Format("SELECT {0} FROM {1}", string.Join(", ", _projectionColumns), _tableName);
         }
 
-        private static Func<IDataReader, TOutput> GenerateMapper<TOutput>(IDataReader reader)
+        private string GetCacheKey()
         {
-            var m = new DynamicMethod("test_mapper", typeof(TOutput), new[] { typeof(IDataReader) }, true);
+            string cacheKey = string.Format("{0}:{1}:{2}", _dbContext.DbConnection.ConnectionString, _tableName, typeof(TTable).FullName);
+            return cacheKey;
+        }
+
+        private IEnumerable<string> GetColumnNames()
+        {
+            string cacheKey = GetCacheKey();
+
+            string[] columnNames;
+            if (ColumnNames.TryGetValue(cacheKey, out columnNames))
+                return columnNames;
+
+            columnNames = (from p in typeof(TTable).GetProperties(BindingFlags.Public | BindingFlags.Instance)
+                           select SqlGenerationUtility.GetColumnName(p)).ToArray();
+
+            ColumnNames[cacheKey] = columnNames;
+            return columnNames;
+        }
+
+        private Func<IDataReader, TTable> GetMapper(IDataReader reader)
+        {
+            string cacheKey = GetCacheKey();
+
+            Delegate mapper;
+            if (PocoMappers.TryGetValue(cacheKey, out mapper))
+                return mapper as Func<IDataReader, TTable>;
+
+            var m = new DynamicMethod(string.Format("__poco_mapper_{0}", PocoMappers.Count), typeof(TTable), new[] { typeof(IDataReader) }, true);
             var il = m.GetILGenerator();
 
-            il.DeclareLocal(typeof(TOutput));
+            il.DeclareLocal(typeof(TTable));
 
-            var ctor = typeof(TOutput).GetConstructor(Type.EmptyTypes);
+            var ctor = typeof(TTable).GetConstructor(Type.EmptyTypes);
             il.Emit(OpCodes.Newobj, ctor);
             il.Emit(OpCodes.Stloc_0);
 
@@ -87,15 +115,15 @@ namespace PocoDb
                 var sourceType = reader.GetFieldType(i);
                 var sourceName = reader.GetName(i);
 
-                var outputProperty = from p in typeof(TOutput).GetProperties(BindingFlags.Public | BindingFlags.Instance)
-                                     where p.Name == sourceName
-                                        && p.PropertyType == sourceType
-                                     select p;
+                var outputProperty = (from p in typeof(TTable).GetProperties(BindingFlags.Public | BindingFlags.Instance)
+                                     where SqlGenerationUtility.GetColumnName(p) == sourceName
+                                           && p.PropertyType == sourceType
+                                     select p).FirstOrDefault();
 
-                if (!outputProperty.Any() || outputProperty.Count() > 1)
+                if (outputProperty == null)
                     continue;
 
-                MethodInfo setValue = outputProperty.First().GetSetMethod();
+                MethodInfo setValue = outputProperty.GetSetMethod();
 
                 il.Emit(OpCodes.Ldloc_0);
                 il.Emit(OpCodes.Ldarg_0);
@@ -110,8 +138,10 @@ namespace PocoDb
 
             //TestShowVisualizer(m);
 
-            var @delegate = (Func<IDataReader, TOutput>)m.CreateDelegate(typeof(Func<IDataReader, TOutput>));
-            return @delegate;
+            var @delegate = m.CreateDelegate(typeof(Func<IDataReader, TTable>));
+            PocoMappers[cacheKey] = @delegate;
+
+            return @delegate as Func<IDataReader, TTable>;
         }
 
         public static void TestShowVisualizer(object objectToVisualize)

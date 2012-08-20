@@ -33,14 +33,35 @@ namespace PocoDb.Tests.Utility
             Assert.AreEqual("PocoWithoutTableNameAttribute", generatedTableName);
         }
 
+        [Test]
+        public void GetColumnName_Returns_ColumnName_Defined_By_Attribute()
+        {
+            var property = typeof(PocoWithTableNameAttribute).GetProperty("PropertyWithColumnNameAttribute");
+            var columnName = SqlGenerationUtility.GetColumnName(property);
+            Assert.AreEqual("TestColumnName", columnName);
+        }
+
+        [Test]
+        public void GetColumnName_Returns_ColumnName_Defined_By_PropertyName()
+        {
+            var property = typeof(PocoWithoutTableNameAttribute).GetProperty("PropertyWithoutColumnNameAttribute");
+            var columnName = SqlGenerationUtility.GetColumnName(property);
+            Assert.AreEqual("PropertyWithoutColumnNameAttribute", columnName);
+        }
+
         #region Test Objects
 
         [TableName("TableName")]
         private class PocoWithTableNameAttribute
-        {}
+        {
+            [ColumnName("TestColumnName")]
+            public string PropertyWithColumnNameAttribute { get; set; }
+        }
 
         private class PocoWithoutTableNameAttribute
-        {}
+        {
+            public string PropertyWithoutColumnNameAttribute { get; set; }
+        }
 
         #endregion
     }

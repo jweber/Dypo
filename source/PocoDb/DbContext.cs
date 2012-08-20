@@ -17,6 +17,8 @@ namespace PocoDb
 
         private IDbConnection _connection;
 
+        public event ExceptionHandler OnException;
+
         public DbContext(string connectionStringName)
         {
             _connectionStringSettings = ConfigurationManager.ConnectionStrings[connectionStringName];
@@ -31,6 +33,14 @@ namespace PocoDb
         }
 
         public IDbConnection DbConnection { get { return OpenConnection(); } }
+
+        internal void HandleException(Exception ex)
+        {
+            if (OnException != null)
+                OnException(ex);
+
+            System.Diagnostics.Debug.WriteLine(ex.Message);
+        }
 
         private IDbConnection OpenConnection()
         {
