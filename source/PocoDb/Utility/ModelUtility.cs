@@ -154,7 +154,7 @@ namespace PocoDb.Utility
         private static string GetCacheKey<TModel>()
         {
             //string cacheKey = string.Format("{0}:{1}:{2}", _dbContext.DbConnection.ConnectionString, _tableName, typeof(TModel).FullName);
-            string cacheKey = string.Format("type: {0}", typeof(TModel).FullName);
+            string cacheKey = string.Format("type: {0}", typeof(TModel).AssemblyQualifiedName);
             return cacheKey.Trim();
         }
 
