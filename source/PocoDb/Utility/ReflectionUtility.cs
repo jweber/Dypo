@@ -4,7 +4,7 @@ using System.Linq.Expressions;
 
 namespace PocoDb.Utility
 {
-    internal class ReflectionUtility
+    internal static class ReflectionUtility
     {
         public static string GetNameFromExpression<T, TProperty>(Expression<Func<T, TProperty>> property, bool onlyRenderLastExpressionPart = false)
         {

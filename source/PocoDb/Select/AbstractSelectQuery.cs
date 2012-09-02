@@ -5,7 +5,7 @@ using PocoDb.Interfaces;
 
 namespace PocoDb.Select
 {
-    abstract class AbstractSelectQuery<TModel>
+    internal abstract class AbstractSelectQuery<TModel>
     {
         private readonly IDbContext _dbContext;
 

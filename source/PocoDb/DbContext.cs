@@ -2,14 +2,16 @@
 using System.Configuration;
 using System.Data;
 using System.Data.Common;
+using System.Linq.Expressions;
 using PocoDb.Interfaces;
+using PocoDb.Select;
 
 namespace PocoDb
 {
     internal class DbContext : IDbContext
     {
         private readonly DbProviderFactory _dbProviderFactory;
-        private readonly ConnectionStringSettings _connectionStringSettings;
+        private readonly string _connectionString;
 
         private IDbConnection _connection;
 
@@ -22,14 +24,22 @@ namespace PocoDb
                 connectionStringName = ConfigurationManager.ConnectionStrings[1].Name;
             }
 
-            _connectionStringSettings = ConfigurationManager.ConnectionStrings[connectionStringName];
-            if (_connectionStringSettings == null)
+            var connectionStringSettings = ConfigurationManager.ConnectionStrings[connectionStringName];
+            if (connectionStringSettings == null)
                 throw new InvalidOperationException("Connection string: " + connectionStringName + " could not be found");
 
-            var providerName = "System.Data.SqlClient";
-            if (!string.IsNullOrEmpty(_connectionStringSettings.ProviderName))
-                providerName = _connectionStringSettings.ProviderName;
+            _connectionString = connectionStringSettings.ConnectionString;
 
+            var providerName = "System.Data.SqlClient";
+            if (!string.IsNullOrEmpty(connectionStringSettings.ProviderName))
+                providerName = connectionStringSettings.ProviderName;
+
+            _dbProviderFactory = DbProviderFactories.GetFactory(providerName);
+        }
+
+        public DbContext(string connectionString, string providerName)
+        {
+            _connectionString = connectionString;
             _dbProviderFactory = DbProviderFactories.GetFactory(providerName);
         }
 
@@ -48,11 +58,21 @@ namespace PocoDb
             if (_connection == null)
             {
                 _connection = _dbProviderFactory.CreateConnection();
-                _connection.ConnectionString = _connectionStringSettings.ConnectionString;
+                _connection.ConnectionString = _connectionString;
                 _connection.Open();
             }
 
             return _connection;
+        }
+
+        public ISelectQuery<TModel> Select<TModel>(Expression<Predicate<TModel>> where = null)
+        {
+            return new SelectQuery<TModel>(this, where);
+        }
+
+        public IDynamicQuery Select(string query, params object[] parameters)
+        {
+            return new DynamicSelectQuery(this, query, parameters);
         }
 
         public void Dispose()

@@ -3,14 +3,12 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Text;
-using System.Threading.Tasks;
 using PocoDb.Providers.SqlServer;
 using PocoDb.Utility;
 
 namespace PocoDb.Expressions
 {
-    public class SqlExpressionVisitor<TModel>
+    internal class SqlExpressionVisitor<TModel>
     {
         private readonly SqlServerDialect _dialect;
 

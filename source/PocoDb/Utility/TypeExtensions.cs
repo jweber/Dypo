@@ -2,7 +2,7 @@
 
 namespace PocoDb.Utility
 {
-    public static class TypeExtensions
+    internal static class TypeExtensions
     {
         /// <summary>
         /// Determines whether [is nullable type] [the specified type to check].

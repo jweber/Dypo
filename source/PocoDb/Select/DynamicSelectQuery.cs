@@ -11,9 +11,9 @@ using PocoDb.Utility;
 
 namespace PocoDb.Select
 {
-    class DynamicSelectQuery : AbstractSelectQuery<dynamic>, IDynamicQuery
+    internal class DynamicSelectQuery : AbstractSelectQuery<dynamic>, IDynamicQuery
     {
-        private static readonly Regex _parameterRegex = new Regex(@"(\@\w+)", RegexOptions.Compiled);
+        private static readonly Regex ParameterRegex = new Regex(@"(\@\w+)", RegexOptions.Compiled);
 
         private readonly IDbContext _dbContext;
         private readonly string _queryText;
@@ -70,7 +70,7 @@ namespace PocoDb.Select
 
         private string ProcessQueryParameters()
         {
-            return _parameterRegex.Replace(_queryText, m =>
+            return ParameterRegex.Replace(_queryText, m =>
             {
                 string parameter = m.Value.Substring(1);
                 object parameterValue = null;

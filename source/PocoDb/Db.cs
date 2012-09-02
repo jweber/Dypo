@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using PocoDb.Interfaces;
+﻿using PocoDb.Interfaces;
 
 namespace PocoDb
 {
@@ -18,6 +13,11 @@ namespace PocoDb
         public static IDbContext Connect(string connectionStringName = null)
         {
             return new DbContext(connectionStringName);
+        }
+
+        public static IDbContext Connect(string connectionString, string providerName)
+        {
+            return new DbContext(connectionString, providerName);
         }
     }
 }

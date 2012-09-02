@@ -8,7 +8,6 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Reflection.Emit;
-using Microsoft.VisualStudio.DebuggerVisualizers;
 
 namespace PocoDb.Utility
 {
@@ -171,8 +170,8 @@ namespace PocoDb.Utility
         [Conditional("ILVISUALIZE")]
         private static void TestShowVisualizer(object objectToVisualize)
         {
-            var visualizerHost = new VisualizerDevelopmentHost(objectToVisualize, typeof(ClrTest.Reflection.MethodBodyVisualizer), typeof(ClrTest.Reflection.MethodBodyObjectSource));
-            visualizerHost.ShowVisualizer();
+//            var visualizerHost = new VisualizerDevelopmentHost(objectToVisualize, typeof(ClrTest.Reflection.MethodBodyVisualizer), typeof(ClrTest.Reflection.MethodBodyObjectSource));
+//            visualizerHost.ShowVisualizer();
         }
     }
 }

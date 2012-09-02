@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Data;
+using System.Linq.Expressions;
 
 namespace PocoDb.Interfaces
 {
@@ -10,5 +11,8 @@ namespace PocoDb.Interfaces
         event ExceptionHandler OnException;
 
         IDbConnection DbConnection { get; }
+
+        ISelectQuery<TModel> Select<TModel>(Expression<Predicate<TModel>> where = null);
+        IDynamicQuery Select(string query, params object[] parameters);
     }
 }

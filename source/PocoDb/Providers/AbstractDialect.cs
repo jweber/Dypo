@@ -3,7 +3,7 @@ using PocoDb.Utility;
 
 namespace PocoDb.Providers
 {
-    public abstract class AbstractDialect
+    internal abstract class AbstractDialect
     {
         public virtual string QuoteValue(object value, Type valueType)
         {
