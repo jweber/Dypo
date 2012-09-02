@@ -52,8 +52,6 @@
     <Compile Include="Db.cs" />
     <Compile Include="DbContext.cs" />
     <Compile Include="DbContextExtensions.cs" />
-    <Compile Include="Expressions\IlmBasedExpressionVisitor.cs" />
-    <Compile Include="Expressions\PocoDbExpressionVisitor.cs" />
     <Compile Include="Expressions\SqlExpressionVisitor.cs" />
     <Compile Include="Interfaces\IDbContext.cs" />
     <Compile Include="Interfaces\IQuery.cs" />
@@ -62,6 +60,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Providers\AbstractDialect.cs" />
     <Compile Include="Providers\SqlServer\SqlServerDialect.cs" />
+    <Compile Include="Query\Order.cs" />
     <Compile Include="Query\QueryExtensions.cs" />
     <Compile Include="SelectQuery.cs" />
     <Compile Include="Utility\AttributeUtility.cs" />

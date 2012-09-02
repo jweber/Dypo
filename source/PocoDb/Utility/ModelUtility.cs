@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Reflection;
 using System.Reflection.Emit;
 using Microsoft.VisualStudio.DebuggerVisualizers;
@@ -19,6 +20,13 @@ namespace PocoDb.Utility
         internal static IEnumerable<string> GetColumnNames<TModel>()
         {
             return GetColumnInformationForModel<TModel>().Select(c => c.Item2);
+        }
+
+        internal static string GetColumnName<TModel, TProperty>(Expression<Func<TModel, TProperty>> member)
+        {
+            var propertyName = ReflectionUtility.GetNameFromExpression(member);
+            var memberInfo = typeof(TModel).GetProperty(propertyName);
+            return GetColumnName<TModel>(memberInfo);
         }
 
         internal static string GetColumnName<TModel>(MemberInfo memberInfo)

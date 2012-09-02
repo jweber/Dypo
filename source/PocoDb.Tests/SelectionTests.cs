@@ -1,13 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Configuration;
-using System.Data.SqlClient;
-using System.Data.SqlServerCe;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using NUnit.Framework;
+﻿using NUnit.Framework;
 using PocoDb.Attributes;
+using PocoDb.Interfaces;
 
 namespace PocoDb.Tests
 {
@@ -23,8 +16,36 @@ namespace PocoDb.Tests
             public string Email { get; set; }
         }
 
+        private void AssertQuery<TModel>(ISelectQuery<TModel> query, string expected)
+        {
+            var generatedSql = ((SelectQuery<TModel>) query).GenerateSql();
+            Assert.That(generatedSql, Is.EqualTo(expected).IgnoreCase);
+        }
+
         [Test]
-        public void Test2()
+        public void Select_OrderBy()
+        {
+            using (var db = Db.Connect())
+            {
+                var query = db.Select<Account>().OrderBy(a => a.Username);
+                AssertQuery(query, "select id, username, emailaddress from account order by username asc");
+            }
+        }
+
+        [Test]
+        public void Select_OrderBy2()
+        {
+            using (var db = Db.Connect())
+            {
+                var query = db.Select<Account>(where: a => a.Id == 1 || a.Id > 10)
+                    .OrderBy(a => a.Username).OrderByDescending(a => a.Email);
+
+                AssertQuery(query, "select id, username, emailaddress from account where ((id = 1) or (id > 10)) order by Username asc, EmailAddress desc");
+            }
+        }
+
+        [Test, Category(TestCategory.Database)]
+        public void Select_Returns_Expected_Data()
         {
             var db = Db.Connect("EmbeddedTest");
             var results = db.Select<Account>(a => a.Id == 1 || a.Id == 2)

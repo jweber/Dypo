@@ -22,6 +22,11 @@ namespace PocoDb
 
         public DbContext(string connectionStringName)
         {
+            if (string.IsNullOrEmpty(connectionStringName))
+            {
+                connectionStringName = ConfigurationManager.ConnectionStrings[0].Name;
+            }
+
             _connectionStringSettings = ConfigurationManager.ConnectionStrings[connectionStringName];
             if (_connectionStringSettings == null)
                 throw new InvalidOperationException("Connection string: " + connectionStringName + " could not be found");
@@ -57,7 +62,8 @@ namespace PocoDb
 
         public void Dispose()
         {
-            _connection.Close();
+            if (_connection != null && _connection.State != ConnectionState.Closed)
+                _connection.Close();
         }
     }
 

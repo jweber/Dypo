@@ -6,7 +6,7 @@ using NUnit.Framework;
 using PocoDb.Expressions;
 using PocoDb.Query;
 
-namespace PocoDb.Tests
+namespace PocoDb.Tests.Expressions
 {
     public static class ExpressionVisitorTestExtensions
     {
@@ -20,7 +20,7 @@ namespace PocoDb.Tests
     }
 
     [TestFixture]
-    class ExpressionTests
+    class SqlExpressionTests
     {
         class TestAccount
         {

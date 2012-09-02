@@ -9,7 +9,13 @@ namespace PocoDb
 {
     public static class Db
     {
-        public static IDbContext Connect(string connectionStringName)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="connectionStringName">
+        /// If <c>null</c>, then we will use the first connection string present in the configuration</param>
+        /// <returns></returns>
+        public static IDbContext Connect(string connectionStringName = null)
         {
             return new DbContext(connectionStringName);
         }
