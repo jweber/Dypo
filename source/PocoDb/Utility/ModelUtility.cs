@@ -2,6 +2,8 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Data;
+using System.Diagnostics;
+using System.Dynamic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -12,8 +14,6 @@ namespace PocoDb.Utility
 {
     internal static class ModelUtility
     {
-        //#define ILVIZUALIZE
-
         private static readonly ConcurrentDictionary<string, Delegate> PocoMappers = new ConcurrentDictionary<string, Delegate>();
         private static readonly ConcurrentDictionary<string, List<Tuple<MemberInfo, string>>> ColumnNames = new ConcurrentDictionary<string, List<Tuple<MemberInfo, string>>>();
 
@@ -55,6 +55,48 @@ namespace PocoDb.Utility
             return columnNames;
         }
 
+        internal static Func<IDataReader, dynamic> GetDynamicMapper(IDataReader reader, string query)
+        {
+            string cacheKey = GetCacheKey(query);
+
+            Delegate mapper;
+            if (PocoMappers.TryGetValue(cacheKey, out mapper))
+                return mapper as Func<IDataReader, dynamic>;
+
+            var m = new DynamicMethod(string.Format("__poco_mapper_{0}", PocoMappers.Count), typeof(ExpandoObject), new[] { typeof(IDataReader) }, true);
+            var il = m.GetILGenerator();
+
+            il.DeclareLocal(typeof(ExpandoObject));
+
+            var ctor = typeof(ExpandoObject).GetConstructor(Type.EmptyTypes);
+            il.Emit(OpCodes.Newobj, ctor);
+            il.Emit(OpCodes.Stloc_0);
+
+            var getDataRecordValue = typeof(IDataRecord).GetMethod("GetValue", new[] { typeof(int) });
+            var setExpando = typeof(IDictionary<string, object>).GetMethod("Add");
+
+            for (int i = 0; i < reader.FieldCount; i++)
+            {
+                il.Emit(OpCodes.Ldloc_0);
+                il.Emit(OpCodes.Ldstr, reader.GetName(i));
+                
+                il.Emit(OpCodes.Ldarg_0);
+                il.Emit(OpCodes.Ldc_I4, i);
+                il.Emit(OpCodes.Callvirt, getDataRecordValue);
+                il.Emit(OpCodes.Callvirt, setExpando);
+            }
+
+            il.Emit(OpCodes.Ldloc_0);
+            il.Emit(OpCodes.Ret);
+
+            TestShowVisualizer(m);
+
+            var @delegate = m.CreateDelegate(typeof(Func<IDataReader, dynamic>));
+            PocoMappers[cacheKey] = @delegate;
+
+            return @delegate as Func<IDataReader, dynamic>;
+        }
+
         internal static Func<IDataReader, TModel> GetMapper<TModel>(IDataReader reader)
         {
             string cacheKey = GetCacheKey<TModel>();
@@ -79,10 +121,11 @@ namespace PocoDb.Utility
                 var sourceType = reader.GetFieldType(i);
                 var sourceName = reader.GetName(i);
 
-                var outputProperty = (from p in typeof(TModel).GetProperties(BindingFlags.Public | BindingFlags.Instance)
-                                     where SqlGenerationUtility.GetColumnName(p) == sourceName
-                                           && p.PropertyType == sourceType
-                                     select p).FirstOrDefault();
+                var outputProperty =
+                    (from p in typeof(TModel).GetProperties(BindingFlags.Public | BindingFlags.Instance)
+                     where SqlGenerationUtility.GetColumnName(p) == sourceName
+                           && p.PropertyType == sourceType
+                     select p).FirstOrDefault();
 
                 if (outputProperty == null)
                     continue;
@@ -100,9 +143,7 @@ namespace PocoDb.Utility
             il.Emit(OpCodes.Ldloc_0);
             il.Emit(OpCodes.Ret);
 
-            #if ILVIZUALIZE
             TestShowVisualizer(m);
-            #endif
 
             var @delegate = m.CreateDelegate(typeof(Func<IDataReader, TModel>));
             PocoMappers[cacheKey] = @delegate;
@@ -113,10 +154,21 @@ namespace PocoDb.Utility
         private static string GetCacheKey<TModel>()
         {
             //string cacheKey = string.Format("{0}:{1}:{2}", _dbContext.DbConnection.ConnectionString, _tableName, typeof(TModel).FullName);
-            string cacheKey = string.Format("{0}", typeof(TModel).FullName);
-            return cacheKey;
+            string cacheKey = string.Format("type: {0}", typeof(TModel).FullName);
+            return cacheKey.Trim();
         }
 
+        private static string GetCacheKey(string dynamicQuery)
+        {
+            int whereIndex = dynamicQuery.IndexOf("where", StringComparison.InvariantCultureIgnoreCase);
+            if (whereIndex > 0)
+                dynamicQuery = dynamicQuery.Substring(0, whereIndex);
+
+            string cacheKey = string.Format("query: {0}", dynamicQuery.ToLowerInvariant());
+            return cacheKey.Trim();
+        }
+
+        [Conditional("ILVISUALIZE")]
         private static void TestShowVisualizer(object objectToVisualize)
         {
             var visualizerHost = new VisualizerDevelopmentHost(objectToVisualize, typeof(ClrTest.Reflection.MethodBodyVisualizer), typeof(ClrTest.Reflection.MethodBodyObjectSource));

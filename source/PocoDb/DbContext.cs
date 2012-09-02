@@ -1,13 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
 using System.Data.Common;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using PocoDb.Interfaces;
-using PocoDb.Providers.SqlServer;
 
 namespace PocoDb
 {
@@ -24,7 +19,7 @@ namespace PocoDb
         {
             if (string.IsNullOrEmpty(connectionStringName))
             {
-                connectionStringName = ConfigurationManager.ConnectionStrings[0].Name;
+                connectionStringName = ConfigurationManager.ConnectionStrings[1].Name;
             }
 
             _connectionStringSettings = ConfigurationManager.ConnectionStrings[connectionStringName];

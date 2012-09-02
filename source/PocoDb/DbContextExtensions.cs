@@ -11,5 +11,10 @@ namespace PocoDb
         {
             return new SelectQuery<TModel>(dbContext, where);
         }
+
+        public static IDynamicQuery Select(this IDbContext dbContext, string query)
+        {
+            return new DynamicSelectQuery(dbContext, query);
+        }
     }
 }

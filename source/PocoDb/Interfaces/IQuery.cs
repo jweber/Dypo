@@ -6,5 +6,6 @@ namespace PocoDb.Interfaces
     {
         IEnumerable<TModel> Query();
         IList<TModel> ToList();
+        TModel First();
     }
 }

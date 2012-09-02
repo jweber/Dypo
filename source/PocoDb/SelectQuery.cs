@@ -58,6 +58,11 @@ namespace PocoDb
             return Query().ToList();
         }
 
+        public TModel First()
+        {
+            return Query().First();
+        }
+
         public IEnumerable<TModel> Query()
         {
             using (var command = _dbContext.DbConnection.CreateCommand())
