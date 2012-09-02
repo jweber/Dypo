@@ -49,7 +49,8 @@
   <ItemGroup>
     <Compile Include="Attributes\ColumnNameAttribute.cs" />
     <Compile Include="Attributes\TableNameAttribute.cs" />
-    <Compile Include="DynamicSelectQuery.cs" />
+    <Compile Include="Select\AbstractSelectQuery.cs" />
+    <Compile Include="Select\DynamicSelectQuery.cs" />
     <Compile Include="Db.cs" />
     <Compile Include="DbContext.cs" />
     <Compile Include="DbContextExtensions.cs" />
@@ -64,7 +65,7 @@
     <Compile Include="Providers\SqlServer\SqlServerDialect.cs" />
     <Compile Include="Query\Order.cs" />
     <Compile Include="Query\QueryExtensions.cs" />
-    <Compile Include="SelectQuery.cs" />
+    <Compile Include="Select\SelectQuery.cs" />
     <Compile Include="Utility\AttributeUtility.cs" />
     <Compile Include="Utility\ModelUtility.cs" />
     <Compile Include="Utility\ReflectionUtility.cs" />

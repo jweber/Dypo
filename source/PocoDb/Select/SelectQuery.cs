@@ -5,12 +5,11 @@ using System.Linq;
 using System.Linq.Expressions;
 using PocoDb.Expressions;
 using PocoDb.Interfaces;
-using PocoDb.Query;
 using PocoDb.Utility;
 
-namespace PocoDb
+namespace PocoDb.Select
 {
-    internal class SelectQuery<TModel> : ISelectQuery<TModel>
+    internal class SelectQuery<TModel> : AbstractSelectQuery<TModel>, ISelectQuery<TModel>
     {
         private readonly IDbContext _dbContext;
         private readonly List<string> _projectionColumns = new List<string>();
@@ -20,6 +19,7 @@ namespace PocoDb
         private readonly string _tableName;
 
         public SelectQuery(IDbContext dbContext, Expression<Predicate<TModel>> where = null)
+            : base(dbContext)
         {
             _dbContext = dbContext;
             
@@ -53,53 +53,7 @@ namespace PocoDb
             return this;
         }
 
-        public IList<TModel> ToList()
-        {
-            return Query().ToList();
-        }
-
-        public TModel First()
-        {
-            return Query().First();
-        }
-
-        public IEnumerable<TModel> Query()
-        {
-            using (var command = _dbContext.DbConnection.CreateCommand())
-            {
-                command.CommandText = GenerateSql();
-
-                IDataReader reader = command.ExecuteReader();
-                var mapper = ModelUtility.GetMapper<TModel>(reader);
-
-                using (reader)
-                {
-                    while (true)
-                    {
-                        TModel output;
-                        try
-                        {
-                            if (!reader.Read())
-                                yield break;
-
-                            output = mapper(reader);
-                        }
-                        catch (Exception ex)
-                        {
-                            var context = _dbContext as DbContext;
-                            if (context != null)
-                                context.HandleException(ex);
-
-                            throw;
-                        }
-
-                        yield return output;
-                    }
-                }
-            }
-        }
-
-        internal string GenerateSql()
+        internal override string GetSql()
         {
             string query = string.Format("SELECT {0} FROM {1}", string.Join(", ", _projectionColumns), _tableName);
             if (_wherePredicates.Count > 0)
@@ -113,6 +67,21 @@ namespace PocoDb
             }
 
             return query;
+        }
+
+        protected override Func<IDataReader, TModel> GetMapper(IDataReader dataReader)
+        {
+            return ModelUtility.GetMapper<TModel>(dataReader);
+        }
+
+        public IList<TModel> ToList()
+        {
+            return Query().ToList();
+        }
+
+        public TModel First()
+        {
+            return Query().First();
         }
     }
 }

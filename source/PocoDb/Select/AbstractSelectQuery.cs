@@ -1,47 +1,42 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Linq;
 using PocoDb.Interfaces;
-using PocoDb.Utility;
 
-namespace PocoDb
+namespace PocoDb.Select
 {
-    class DynamicSelectQuery : IDynamicQuery
+    abstract class AbstractSelectQuery<TModel>
     {
         private readonly IDbContext _dbContext;
-        private readonly string _queryText;
 
-        public DynamicSelectQuery(IDbContext dbContext, string queryText)
+        protected AbstractSelectQuery(IDbContext dbContext)
         {
             _dbContext = dbContext;
-            _queryText = queryText;
         }
 
-        public IList<dynamic> ToList()
+        internal abstract string GetSql();
+        protected abstract Func<IDataReader, TModel> GetMapper(IDataReader dataReader);
+        
+        protected virtual IDbCommand CreateCommand()
         {
-            return Query().ToList();
+            var command = _dbContext.DbConnection.CreateCommand();
+            command.CommandText = GetSql();
+            
+            return command;
         }
 
-        public dynamic First()
+        public IEnumerable<TModel> Query()
         {
-            return Query().First();
-        }
-
-        public IEnumerable<dynamic> Query()
-        {
-            using (var command = _dbContext.DbConnection.CreateCommand())
+            using (var command = CreateCommand())
             {
-                command.CommandText = _queryText;
-
                 IDataReader reader = command.ExecuteReader();
-                Func<IDataReader, dynamic> mapper = ModelUtility.GetDynamicMapper(reader, _queryText);
+                var mapper = GetMapper(reader);
 
                 using (reader)
                 {
                     while (true)
                     {
-                        dynamic output;
+                        TModel output;
                         try
                         {
                             if (!reader.Read())
@@ -61,7 +56,7 @@ namespace PocoDb
                         yield return output;
                     }
                 }
-            }
+            }            
         }
     }
 }

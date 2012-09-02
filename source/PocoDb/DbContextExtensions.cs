@@ -2,6 +2,7 @@
 using System.Linq.Expressions;
 using PocoDb.Interfaces;
 using PocoDb.Query;
+using PocoDb.Select;
 
 namespace PocoDb
 {
@@ -12,9 +13,9 @@ namespace PocoDb
             return new SelectQuery<TModel>(dbContext, where);
         }
 
-        public static IDynamicQuery Select(this IDbContext dbContext, string query)
+        public static IDynamicQuery Select(this IDbContext dbContext, string query, params object[] parameters)
         {
-            return new DynamicSelectQuery(dbContext, query);
+            return new DynamicSelectQuery(dbContext, query, parameters);
         }
     }
 }

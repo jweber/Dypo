@@ -2,6 +2,7 @@
 using NUnit.Framework;
 using PocoDb.Attributes;
 using PocoDb.Interfaces;
+using PocoDb.Select;
 
 namespace PocoDb.Tests
 {
@@ -21,7 +22,7 @@ namespace PocoDb.Tests
 
         private void AssertQuery<TModel>(ISelectQuery<TModel> query, string expected)
         {
-            var generatedSql = ((SelectQuery<TModel>) query).GenerateSql();
+            var generatedSql = ((SelectQuery<TModel>) query).GetSql();
             Assert.That(generatedSql, Is.EqualTo(expected).IgnoreCase);
         }
 
@@ -30,12 +31,75 @@ namespace PocoDb.Tests
         {
             using (var db = Db.Connect())
             {
-                var query = db.Select("select Id, Username, Created from account where Id = 1");
+                var query = db.Select("select Id, Username, Created from account where Id = @0", 1);
                 var result = query.First();
 
                 Assert.AreEqual(1, result.Id);
                 Assert.AreEqual("TestAccount1", result.Username);
                 Assert.AreEqual(new DateTime(2012, 1, 25), result.Created);
+            }
+        }
+
+        [Test]
+        public void DynamicSelect2()
+        {
+            using (var db = Db.Connect())
+            {
+                var query = db.Select("select Id from account where (Id in (@0))", new[] { 1, 2 });
+                var result = query.First();
+
+                Assert.AreEqual(1, result.Id);
+            }
+        }
+
+        [Test]
+        public void DynamicSelect3()
+        {
+            using (var db = Db.Connect())
+            {
+                var query = db.Select("select id, username from account where Id = @id", new { id = 1 });
+                var result = query.First();
+
+                Assert.AreEqual(1, result.Id);
+                Assert.AreEqual("TestAccount1", result.Username);
+            }
+        }
+
+        [Test]
+        public void DynamicSelect4()
+        {
+            using (var db = Db.Connect())
+            {
+                var query = db.Select("select id, username as Name from account where Id in (@ids)", new { ids = new[] { 1, 2 } });
+                var result = query.First();
+
+                Assert.AreEqual(1, result.Id);
+                Assert.AreEqual("TestAccount1", result.Name);
+            }
+        }
+
+        [Test]
+        public void DynamicSelect5()
+        {
+            using (var db = Db.Connect())
+            {
+                var query = db.Select("select id, username from account where username = @username", new { id = 1, username = "TestAccount1" });
+                var result = query.First();
+
+                Assert.AreEqual(1, result.Id);
+                Assert.AreEqual("TestAccount1", result.Username);
+            }
+        }
+
+        [Test]
+        public void DynamicSelect6()
+        {
+            using (var db = Db.Connect())
+            {
+                var query = db.Select("select id from account where username = @1", 1, "TestAccount1");
+                var result = query.First();
+
+                Assert.AreEqual(1, result.Id);
             }
         }
 
