@@ -50,6 +50,8 @@
   <ItemGroup>
     <Compile Include="Attributes\ColumnNameAttributeTests.cs" />
     <Compile Include="Attributes\TableNameAttributeTests.cs" />
+    <Compile Include="ExpressionTests.cs" />
+    <Compile Include="Providers\AbstractDialectTests.cs" />
     <Compile Include="SelectionTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Utility\AttributeUtilityTests.cs" />

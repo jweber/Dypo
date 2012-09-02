@@ -5,7 +5,7 @@ namespace PocoDb.Interfaces
 {
     public delegate void ExceptionHandler(Exception ex);
 
-    public interface IDbContext
+    public interface IDbContext : IDisposable
     {
         event ExceptionHandler OnException;
 

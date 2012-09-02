@@ -1,9 +1,9 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Linq.Expressions;
 
 namespace PocoDb.Interfaces
 {
-    public interface ISelectQuery<TTable> : IQuery<TTable>
+    public interface ISelectQuery<TModel> : IWhereQuery<TModel>
     {
-        IEnumerable<TTable> Execute();
     }
 }

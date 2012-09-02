@@ -11,21 +11,21 @@ namespace PocoDb.Utility
         /// <summary>
         /// Gets the name of the table. If <paramref name="tableName"/> is <c>null</c>,
         /// then the table name is derived from either usage of the <see cref="TableNameAttribute"/>
-        /// or simply the name of <typeparamref name="TTable"/>
+        /// or simply the name of <typeparamref name="TModel"/>
         /// </summary>
-        /// <typeparam name="TTable"></typeparam>
+        /// <typeparam name="TModel"></typeparam>
         /// <param name="tableName"></param>
         /// <returns></returns>
-        public static string GetTableName<TTable>(string tableName = null)
+        public static string GetTableName<TModel>(string tableName = null)
         {
             if (!string.IsNullOrWhiteSpace(tableName))
                 return tableName;
 
-            var tableNameAttribute = AttributeUtility.GetAttribute<TableNameAttribute>(typeof(TTable));
+            var tableNameAttribute = AttributeUtility.GetAttribute<TableNameAttribute>(typeof(TModel));
             if (tableNameAttribute != null)
                 return tableNameAttribute.TableName;
 
-            return typeof(TTable).Name;
+            return typeof(TModel).Name;
         }
 
         /// <summary>

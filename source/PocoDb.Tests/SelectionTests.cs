@@ -27,10 +27,9 @@ namespace PocoDb.Tests
         public void Test2()
         {
             var db = Db.Connect("EmbeddedTest");
-            var results = db.Select<Account>()
-                .Execute()
+            var results = db.Select<Account>(a => a.Id == 1 || a.Id == 2)
                 .ToList();
-            
+
             Assert.AreEqual(1, results.Count);
             Assert.AreEqual(1, results[0].Id);
             Assert.AreEqual("TestAccount1", results[0].Username);
